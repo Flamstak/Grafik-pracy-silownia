@@ -61,4 +61,4 @@ Aplikacja powinna od razu się załadować i być gotowa do użycia. 👍
 Aplikację możesz zobaczyć w akcji pod adresem:
 👉 [https://flamstak.github.io/Grafik-pracy-silownia/](https://flamstak.github.io/Grafik-pracy-silownia/)
 
-*(**Pamiętaj, aby tutaj dodać zrzuty ekranu z Twojej aplikacji!** To kluczowy element dobrego README, uzupełniający live demo.)*
+*![Widok kalendarza](zdjecie.png)*
