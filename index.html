@@ -1,64 +1,930 @@
-# Generator Grafiku Pracy 🗓️
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generator Grafiku Pracy</title>
+    <style>
+        /* Główne zmienne kolorów */
+        :root {
+            --kolor-glowny: #2c3e50;
+            --kolor-tla: #ecf0f1;
+            --kolor-jasny: #ffffff;
+            --kolor-akcent: #3498db;
+            --kolor-glownie: #27ae60;
+            --kolor-syntex: #e67e22;
+            --kolor-kozia: #8e44ad;
+            --kolor-weekend: #fdf2f2;
+            --kolor-separatora-cienkiego: rgba(0,0,0,0.15);
+            --kolor-separatora-grubego: #95a5a6;
+        }
 
-Prosta i intuicyjna aplikacja webowa do zarządzania grafikami pracy dla wielu pracowników. Umożliwia łatwe planowanie zmian (rannych/popołudniowych) w różnych lokalizacjach ("Główna", "Syntex", "Kozia"), automatyczne uzupełnianie grafiku oraz generowanie podsumowań miesięcznych. Idealne narzędzie dla małych zespołów lub do użytku osobistego. 💪
+        /* Podstawowe style dla całego dokumentu */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--kolor-tla);
+            color: var(--kolor-glowny);
+            margin: 0;
+            padding: 20px;
+        }
 
-## Spis Treści
+        /* Kontener główny aplikacji */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background-color: var(--kolor-jasny);
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
 
-- [Cechy](#cechy)
-- [Technologie](#technologie)
-- [Jak uruchomić projekt lokalnie?](#jak-uruchomić-projekt-lokalnie)
-- [Użycie](#użycie)
-- [Podgląd / Live Demo](#podgląd--live-demo)
-- [Ważna Uwaga Projektowa](#ważna-uwaga-projektowa)
-- [Licencja](#licencja)
+        /* Nagłówek strony z kontrolkami daty */
+        header {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+            border-bottom: 2px solid var(--kolor-tla);
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+        
+        header h1 { margin: 0; font-size: 1.8em; flex-grow: 1; }
+        .controls, .employee-form { display: flex; gap: 10px; align-items: center; }
+        
+        /* Ogólne style dla elementów formularza i przycisków */
+        select, input, textarea, button { padding: 10px; border-radius: 5px; border: 1px solid #bdc3c7; font-size: 1em; }
+        textarea { width: 250px; height: 80px; resize: vertical; }
+        button { background-color: var(--kolor-akcent); color: var(--kolor-jasny); border: none; cursor: pointer; transition: background-color 0.2s; }
+        button:hover { background-color: #2980b9; }
+        #btnClearData { background-color: #c0392b; }
+        #btnClearData:hover { background-color: #e74c3c; }
+        #print-schedule-btn { background-color: #28a745; }
+        #print-schedule-btn:hover { background-color: #218838; }
 
-## Cechy
+        /* Style tabeli kalendarza */
+        .calendar-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+        th, td { border: 1px solid #ddd; text-align: center; }
+        th { background-color: #f2f2f2; font-weight: bold; padding: 8px 0; height: 60px; }
+        
+        /* Gruba linia oddzielająca pracowników */
+        tbody tr {
+            border-bottom: 3px solid var(--kolor-separatora-grubego);
+        }
+        tbody tr:last-child {
+            border-bottom: 1px solid #ddd;
+        }
 
-* **Interaktywny Kalendarz:** Dynamiczne generowanie kalendarza dla wybranego miesiąca i roku. 📅
-* **Zarządzanie Pracownikami:** Łatwe dodawanie i usuwanie pracowników. ➕➖
-* **Planowanie Zmian:** Kliknij, aby przypisać zmiany (Rano/Popołudnie) do siłowni (G/S/K) w poszczególnych dniach. 🖱️
-* **Automatyczne Uzupełnianie:** Funkcja automatycznego generowania grafiku dla wybranego pracownika na cały miesiąc, z możliwością określenia siłowni i początkowej zmiany. 🤖
-* **Podsumowanie Miesięczne:** Automatycznie generowane podsumowanie zmian dla każdego pracownika, z rozbiciem na typ zmiany i siłownię. 📊
-* **Drukowanie:** Przyjazny dla druku widok grafiku i podsumowania. 🖨️
-* **Lokalne Przechowywanie Danych:** Wszystkie dane (pracownicy i grafik) są automatycznie zapisywane w pamięci lokalnej przeglądarki (`localStorage`), dzięki czemu są dostępne po ponownym otwarciu aplikacji. 💾
+        .day-header { font-size: 0.9em; }
+        .day-number { font-size: 1.2em; font-weight: bold; }
+        
+        /* Komórka z nazwą pracownika */
+        .employee-name-cell {
+            font-weight: bold;
+            text-align: left;
+            padding-left: 15px;
+            width: 200px;
+            padding: 0;
+            position: relative;
+        }
 
-## Technologie
+        /* Nagłówek dla kolumny pracownika */
+        .employee-name-header {
+            width: 200px;
+        }
+        
+        /* Kontener dla etykiet zmian (Rano/Popołudnie) w nagłówku i w komórkach nazwisk */
+        .shift-label-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            height: 100%;
+            width: calc(100% - 25px);
+            padding-left: 15px;
+            box-sizing: border-box;
+        }
 
-Projekt został zbudowany przy użyciu podstawowych technologii webowych:
+        .shift-label {
+            height: 50%;
+            display: flex;
+            align-items: center;
+            font-size: 0.85em;
+            color: #555;
+        }
 
-* **HTML5:** Struktura strony. 🏗️
-* **CSS3:** Stylizacja i responsywny wygląd. 🎨
-* **JavaScript (ES6+):** Logika aplikacji, interakcje i zarządzanie danymi. 🧠
+        .shift-label.morning-label { border-bottom: 1px solid var(--kolor-separatora-cienkiego); }
 
-Brak zewnętrznych bibliotek czy frameworków, co sprawia, że jest lekki i łatwy do zrozumienia. ✨
+        /* Komórka dla konkretnego dnia w grafiku */
+        .day-cell { padding: 0; height: 60px; position: relative; }
+        .day-cell.weekend { background-color: var(--kolor-weekend); }
+        .day-header.weekend { color: #e74c3c; }
+        
+        /* Pojedyncza zmiana (Rano lub Popołudnie) w komórce dnia */
+        .shift {
+            height: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2em;
+            transition: background-color 0.2s;
+        }
+        .shift.morning {
+            border-bottom: 1px solid var(--kolor-separatora-cienkiego);
+        }
+        .day-cell.weekend .shift.morning { border-bottom-color: rgba(0,0,0,0.05); }
 
-## Jak uruchomić projekt lokalnie?
+        /* Kolory zmian dla różnych siłowni */
+        .work-g { background-color: var(--kolor-glownie) !important; color: white; }
+        .work-s { background-color: var(--kolor-syntex) !important; color: white; }
+        .work-k { background-color: var(--kolor-kozia) !important; color: white; }
 
-Ten projekt to pojedynczy plik HTML, który zawiera w sobie style CSS i skrypty JavaScript. Aby go uruchomić:
+        /* Sekcja legendy dla oznaczeń zmian */
+        .legend {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid var(--kolor-tla);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            justify-content: center;
+            font-size: 0.95em;
+        }
 
-1.  **Sklonuj repozytorium:**
-    ```bash
-    git clone [https://github.com/Flamstak/Grafik-pracy-silownia.git](https://github.com/Flamstak/Grafik-pracy-silownia.git)
-    ```
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
 
-2.  **Otwórz plik `index.html`:**
-    Przejdź do sklonowanego folderu i po prostu otwórz plik `index.html` w swojej ulubionej przeglądarce internetowej (np. Chrome, Firefox). 🌐
+        /* Ramka koloru w legendzie i podsumowaniu */
+        .legend-color-box {
+            width: 25px;
+            height: 25px;
+            border-radius: 4px;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
 
-Aplikacja powinna od razu się załadować i być gotowa do użycia. 👍
+        /* Sekcja kontroli automatycznego uzupełniania grafiku */
+        .autofill-section {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            margin-bottom: 20px;
+        }
 
-## Użycie
+        .autofill-section label {
+            font-weight: bold;
+        }
 
-1.  **Wybierz Miesiąc i Rok:** Użyj rozwijanych list na górze, aby wybrać miesiąc i rok, dla którego chcesz stworzyć grafik. 🗓️
-2.  **Dodaj Pracowników:** Wpisz imiona i nazwiska pracowników (jedno na linię) w polu tekstowym i kliknij "Dodaj do grafiku". ✍️
-3.  **Planuj Zmiany:** Kliknij dwukrotnie (lub wielokrotnie) na komórkę zmiany (Rano/Popołudnie) w kalendarzu, aby cyklicznie przełączać się między siłowniami (Główna, Syntex, Kozia) lub usunąć zmianę. 🔄
-4.  **Automatyczne Uzupełnianie:** Wybierz pracownika, siłownię i początkową zmianę w sekcji "Automatycznie uzupełnij grafik", a następnie kliknij "Uzupełnij automatycznie". ⚙️
-5.  **Usuń Pracownika:** Kliknij symbol `&times;` (X) obok nazwiska pracownika, aby go usunąć wraz z całym jego grafikiem. 🗑️
-6.  **Wyczyść Dane:** Przycisk "Wyczyść dane" usuwa wszystkich pracowników i cały grafik. Używaj ostrożnie! ⚠️
-7.  **Drukuj Grafik:** Kliknij "Drukuj Grafik", aby przygotować widok do druku. 🖨️
+        /* Przycisk usuwania pracownika (widoczny tylko w widoku przeglądarki) */
+        .remove-employee-btn {
+            position: absolute;
+            top: 50%;
+            right: 5px;
+            transform: translateY(-50%);
+            background: #e74c3c;
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            opacity: 0.8;
+            transition: opacity 0.2s, background-color 0.2s;
+            line-height: 1;
+            padding-bottom: 1px;
+        }
+        .remove-employee-btn:hover {
+            opacity: 1;
+            background-color: #c0392b;
+        }
+        /* Ukryj przycisk usuwania w widoku do druku */
+        @media print {
+            .remove-employee-btn {
+                display: none !important;
+            }
+        }
 
-## Podgląd / Live Demo
+        /* Sekcja podsumowania zmian */
+        #summary-container {
+            margin-top: 30px;
+            padding: 20px;
+            border-top: 2px solid var(--kolor-tla);
+            background-color: #f9f9f9;
+            border-radius: 8px;
+        }
 
-Aplikację możesz zobaczyć w akcji pod adresem:
-👉 [https://flamstak.github.io/Grafik-pracy-silownia/](https://flamstak.github.io/Grafik-pracy-silownia/)
+        #summary-container h2 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: var(--kolor-glowny);
+            font-size: 1.3em;
+        }
 
-*(**Pamiętaj, aby tutaj dodać zrzuty ekranu z Twojej aplikacji!** To kluczowy element dobrego README, uzupełniający live demo.)*
+        .summary-item {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 10px 20px;
+            margin-bottom: 10px;
+            padding-bottom: 10px;
+            border-bottom: 1px dashed #e0e0e0;
+        }
+
+        .summary-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .summary-item strong {
+            flex-basis: 150px;
+            text-align: left;
+            margin-right: 10px;
+            font-size: 1.1em;
+            color: var(--kolor-akcent);
+        }
+
+        .summary-details {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .summary-detail-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 5px 10px;
+            background-color: var(--kolor-jasny);
+        }
+
+        .summary-detail-box {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.95em;
+        }
+        .summary-detail-box .legend-color-box {
+            width: 20px;
+            height: 20px;
+            min-width: 20px;
+        }
+        /* Wymuś dokładne kolory na wydruku dla podsumowania */
+        @media print {
+            .summary-item, #summary-container {
+                page-break-inside: avoid;
+            }
+            .summary-detail-box .legend-color-box {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+        }
+
+        /* Responsywność dla mniejszych ekranów */
+        @media (max-width: 768px) {
+            header { flex-direction: column; align-items: stretch; }
+            .day-cell { font-size: 1.2em; }
+            th, td { height: 50px; }
+            .legend {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .autofill-section {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .summary-item {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 5px;
+            }
+            .summary-item strong {
+                flex-basis: auto;
+                width: 100%;
+                text-align: left;
+            }
+            .summary-details {
+                flex-wrap: wrap;
+                width: 100%;
+                justify-content: flex-start;
+            }
+        }
+
+        /* Style dla drukowania */
+        @media print {
+            body {
+                background-color: #fff;
+                margin: 0;
+                padding: 0;
+            }
+
+            .container {
+                box-shadow: none;
+                border-radius: 0;
+                padding: 0;
+                width: 100%;
+                max-width: 100%;
+            }
+
+            /* Ukryj elementy niepotrzebne na wydruku */
+            header .controls,
+            .employee-form,
+            .autofill-section,
+            button,
+            textarea,
+            select,
+            input,
+            .legend h2 {
+                display: none !important;
+            }
+
+            /* Pokaż tytuł i aktualny miesiąc/rok na wydruku */
+            header h1 {
+                display: block !important;
+                text-align: center;
+                margin-bottom: 10px;
+                font-size: 1.5em;
+            }
+            
+            #print-month-year {
+                display: block !important;
+                text-align: center;
+                margin-bottom: 20px;
+                font-size: 1.2em;
+                font-weight: bold;
+            }
+
+            /* Dostosuj tabelę kalendarza do druku */
+            .calendar-wrapper {
+                overflow-x: visible;
+                width: 100%;
+            }
+            table {
+                width: 100%;
+                table-layout: auto;
+            }
+            th, td {
+                border: 1px solid #000;
+                padding: 3px;
+            }
+            .employee-name-cell {
+                width: 180px;
+            }
+            .employee-name-header {
+                width: 180px;
+            }
+            .day-cell {
+                height: auto;
+            }
+            .shift {
+                font-size: 1em;
+                height: 25px;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .shift-label {
+                font-size: 0.75em;
+                height: 25px;
+            }
+
+            /* Upewnij się, że kolor tła weekendów jest drukowany */
+            td.day-cell.weekend {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                background-color: var(--kolor-weekend) !important;
+            }
+
+            /* Upewnij się, że legenda jest widoczna i dobrze ułożona */
+            .legend {
+                display: flex;
+                flex-wrap: wrap;
+                justify-content: flex-start;
+                margin-top: 30px;
+                padding-top: 15px;
+                border-top: 1px solid #ccc;
+                page-break-before: auto;
+                font-size: 0.9em;
+            }
+            .legend-item {
+                margin-right: 20px;
+                margin-bottom: 10px;
+            }
+            .legend-color-box {
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>Grafik Pracy</h1>
+            <div class="controls">
+                <label for="month-select">Miesiąc:</label>
+                <select id="month-select"></select>
+                <label for="year-select">Rok:</label>
+                <select id="year-select"></select>
+                <button id="print-schedule-btn">Drukuj Grafik</button>
+            </div>
+        </header>
+
+        <div class="employee-form">
+            <label for="employee-names">Dodaj osoby (jedna w linii):</label>
+            <textarea id="employee-names" placeholder="Jan Kowalski&#10;Anna Nowak"></textarea>
+            <button id="add-employees-btn">Dodaj do grafiku</button>
+            <button id="btnClearData" title="Wyczyść cały grafik i pracowników">Wyczyść dane</button>
+        </div>
+
+        <div class="autofill-section">
+            <label for="autofill-employee-select">Automatycznie uzupełnij grafik dla:</label>
+            <select id="autofill-employee-select">
+                <option value="">-- Wybierz pracownika --</option>
+            </select>
+            <label for="autofill-gym-select">Siłownia:</label>
+            <select id="autofill-gym-select">
+                <option value="G">Główna (G)</option>
+                <option value="S">Syntex (S)</option>
+                <option value="K">Kozia (K)</option>
+            </select>
+            <label for="autofill-start-shift">Rozpocznij od zmiany:</label>
+            <select id="autofill-start-shift">
+                <option value="R">Rano (R)</option>
+                <option value="P">Popołudnie (P)</option>
+            </select>
+            <button id="autofill-btn">Uzupełnij automatycznie</button>
+        </div>
+        
+        <div id="print-month-year" style="display: none;"></div>
+
+        <main class="calendar-wrapper">
+            <div id="calendar-container"></div>
+        </main>
+
+        <div id="summary-container">
+            <h2>Podsumowanie zmian w miesiącu:</h2>
+        </div>
+
+        <div class="legend">
+            <h2>Legenda:</h2>
+            <div class="legend-item">
+                <div class="legend-color-box work-g">G</div>
+                <span>- Zmiana Główna</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color-box work-s">S</div>
+                <span>- Zmiana Syntex</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color-box work-k">K</div>
+                <span>- Zmiana Kozia</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-color-box" style="background-color: var(--kolor-weekend); border: 1px solid #ccc; color: var(--kolor-glowny);"></div>
+                <span>- Weekend</span>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        // Pobranie referencji do elementów DOM
+        const monthSelect = document.getElementById('month-select');
+        const yearSelect = document.getElementById('year-select');
+        const calendarContainer = document.getElementById('calendar-container');
+        const addEmployeesBtn = document.getElementById('add-employees-btn');
+        const employeeNamesTextarea = document.getElementById('employee-names');
+        const btnClearData = document.getElementById('btnClearData');
+        const autofillEmployeeSelect = document.getElementById('autofill-employee-select');
+        const autofillGymSelect = document.getElementById('autofill-gym-select');
+        const autofillStartShiftSelect = document.getElementById('autofill-start-shift');
+        const autofillBtn = document.getElementById('autofill-btn');
+        const printScheduleBtn = document.getElementById('print-schedule-btn');
+        const printMonthYearDiv = document.getElementById('print-month-year');
+        const summaryContainer = document.getElementById('summary-container');
+
+        let employees = []; // Tablica przechowująca dane pracowników i ich grafiki
+        let currentYear, currentMonth;
+
+        // Inicjalizacja aplikacji po załadowaniu DOM
+        function init() {
+            loadDataFromLocalStorage();
+            populateDateSelectors();
+            setupEventListeners();
+            render(); // Wyrenderowanie początkowego grafiku
+            populateAutofillEmployeeSelect();
+        }
+
+        // Konfiguracja nasłuchiwania zdarzeń dla interakcji użytkownika
+        function setupEventListeners() {
+            monthSelect.addEventListener('change', handleDateChange);
+            yearSelect.addEventListener('change', handleDateChange);
+            addEmployeesBtn.addEventListener('click', addEmployees);
+            btnClearData.addEventListener('click', clearAllData);
+            calendarContainer.addEventListener('click', handleShiftClick);
+            autofillBtn.addEventListener('click', handleAutofill);
+            printScheduleBtn.addEventListener('click', printSchedule);
+            calendarContainer.addEventListener('click', handleRemoveEmployeeClick);
+        }
+
+        // Obsługa zmiany wybranego miesiąca lub roku
+        function handleDateChange() {
+            currentYear = parseInt(yearSelect.value);
+            currentMonth = parseInt(monthSelect.value);
+            render();
+        }
+
+        // Uzupełnienie list rozwijanych dla wyboru miesiąca i roku
+        function populateDateSelectors() {
+            const now = new Date();
+            currentYear = now.getFullYear();
+            currentMonth = now.getMonth(); // Miesiące są indeksowane od 0
+            const monthNames = ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"];
+            monthSelect.innerHTML = monthNames.map((name, index) => `<option value="${index}">${name}</option>`).join('');
+            
+            // Generowanie lat w zakresie
+            for (let i = currentYear - 2; i <= currentYear + 5; i++) {
+                yearSelect.innerHTML += `<option value="${i}">${i}</option>`;
+            }
+            monthSelect.value = currentMonth;
+            yearSelect.value = currentYear;
+        }
+
+        // Dodawanie pracowników z pola tekstowego do listy
+        function addEmployees() {
+            const names = employeeNamesTextarea.value.trim().split('\n').filter(name => name);
+            if (names.length === 0) return;
+
+            names.forEach(name => {
+                // Dodaj tylko nowych pracowników, aby uniknąć duplikatów
+                if (!employees.find(emp => emp.name === name)) {
+                    employees.push({ name: name, schedule: {} });
+                }
+            });
+            employeeNamesTextarea.value = ''; // Wyczyść pole po dodaniu
+            saveDataToLocalStorage();
+            render();
+            populateAutofillEmployeeSelect(); // Zaktualizuj listę w autofill
+        }
+
+        // Uzupełnienie listy rozwijanej pracowników do automatycznego uzupełniania
+        function populateAutofillEmployeeSelect() {
+            autofillEmployeeSelect.innerHTML = '<option value="">-- Wybierz pracownika --</option>';
+            employees.forEach(employee => {
+                const option = document.createElement('option');
+                option.value = employee.name;
+                option.textContent = employee.name;
+                autofillEmployeeSelect.appendChild(option);
+            });
+        }
+
+        // Obsługa kliknięcia na zmianę w kalendarzu (cykliczna zmiana G->S->K->brak)
+        function handleShiftClick(event) {
+            const shiftDiv = event.target.closest('.shift');
+            if (!shiftDiv) return; // Upewnij się, że kliknięto na element zmiany
+
+            const cell = shiftDiv.parentElement;
+            const { employeeName, date } = cell.dataset;
+            const { shift } = shiftDiv.dataset; // "R" dla Rano, "P" dla Popołudnie
+            
+            const employee = employees.find(emp => emp.name === employeeName);
+            if (!employee) return;
+
+            // Inicjalizacja harmonogramu dla danego dnia, jeśli nie istnieje
+            if (!employee.schedule[date]) {
+                employee.schedule[date] = {};
+            }
+            
+            const currentStatus = employee.schedule[date][shift];
+            let nextStatus;
+
+            // Logika zmiany statusu: Główna -> Syntex -> Kozia -> Brak
+            if (!currentStatus) nextStatus = 'G';
+            else if (currentStatus === 'G') nextStatus = 'S';
+            else if (currentStatus === 'S') nextStatus = 'K';
+            else if (currentStatus === 'K') nextStatus = undefined; // Usunięcie zmiany
+
+            if (nextStatus) {
+                employee.schedule[date][shift] = nextStatus;
+            } else {
+                // Jeśli nextStatus to undefined, usuń zmianę
+                delete employee.schedule[date][shift];
+                // Jeśli nie ma już żadnych zmian dla tego dnia, usuń cały wpis dla daty
+                if (Object.keys(employee.schedule[date]).length === 0) {
+                    delete employee.schedule[date];
+                }
+            }
+            
+            saveDataToLocalStorage();
+            updateShiftAppearance(shiftDiv, nextStatus); // Wizualna aktualizacja zmiany
+            renderSummary(); // Odśwież podsumowanie po zmianie
+        }
+
+        // Aktualizacja wyglądu komórki zmiany po kliknięciu
+        function updateShiftAppearance(shiftDiv, status) {
+            shiftDiv.textContent = status || ''; // Wyświetl status lub pusty string
+            shiftDiv.classList.remove('work-g', 'work-s', 'work-k'); // Usuń poprzednie klasy kolorów
+            if (status) {
+                shiftDiv.classList.add(`work-${status.toLowerCase()}`); // Dodaj nową klasę koloru
+            }
+        }
+
+        // Automatyczne uzupełnianie grafiku dla wybranego pracownika
+        function handleAutofill() {
+            const selectedEmployeeName = autofillEmployeeSelect.value;
+            const selectedGym = autofillGymSelect.value;
+            const startShift = autofillStartShiftSelect.value;
+
+            if (!selectedEmployeeName) {
+                alert('Proszę wybrać pracownika do automatycznego uzupełniania.');
+                return;
+            }
+
+            const employee = employees.find(emp => emp.name === selectedEmployeeName);
+            if (!employee) {
+                alert('Wybrany pracownik nie został znaleziony.');
+                return;
+            }
+
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            let weekCounter = 0; // Licznik tygodni do naprzemiennych zmian
+
+            // Określenie dnia tygodnia dla pierwszego dnia miesiąca
+            const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
+            const dayOfWeekFirstDay = (firstDayOfMonth.getDay() === 0) ? 6 : firstDayOfMonth.getDay() - 1; // 0=Pon, ..., 6=Nie
+
+            let currentShiftIndex = (startShift === 'R') ? 0 : 1; // 0 dla Rano, 1 dla Popołudnie
+            const shiftTypes = ['R', 'P'];
+
+            // Pętla przez wszystkie dni miesiąca
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dayDate = new Date(currentYear, currentMonth, i);
+                const dayOfWeek = (dayDate.getDay() === 0) ? 6 : dayDate.getDay() - 1; // 0=Pon, ..., 6=Nie
+                const isoDate = dayDate.toISOString().split('T')[0]; // Format YYYY-MM-DD
+
+                // Zwiększ licznik tygodni w poniedziałek i zmieniaj typ zmiany na dany tydzień
+                if (dayOfWeek === 0) { // Poniedziałek
+                    if (i > 1) { // Nie dla pierwszego dnia miesiąca, jeśli jest poniedziałkiem
+                        weekCounter++;
+                    }
+                    // Alternowanie zmiany początkowej dla tygodnia
+                    currentShiftIndex = (startShift === 'R') ? (weekCounter % 2 === 0 ? 0 : 1) : (weekCounter % 2 === 0 ? 1 : 0);
+                }
+
+                const assignedShift = shiftTypes[currentShiftIndex];
+
+                if (dayOfWeek >= 0 && dayOfWeek <= 4) { // Od poniedziałku do piątku
+                    if (!employee.schedule[isoDate]) {
+                        employee.schedule[isoDate] = {};
+                    }
+                    employee.schedule[isoDate][assignedShift] = selectedGym;
+
+                    // Wyczyść drugą zmianę dla tego samego dnia
+                    const otherShiftToClear = (assignedShift === 'R') ? 'P' : 'R';
+                    if (employee.schedule[isoDate][otherShiftToClear]) {
+                        delete employee.schedule[isoDate][otherShiftToClear];
+                    }
+
+                } else { // Weekend (Sobota lub Niedziela) - wyczyść wszystkie zmiany
+                    if (employee.schedule[isoDate]) {
+                        delete employee.schedule[isoDate].R;
+                        delete employee.schedule[isoDate].P;
+                        // Jeśli dzień jest pusty po usunięciu zmian, usuń wpis dla daty
+                        if (Object.keys(employee.schedule[isoDate]).length === 0) {
+                            delete employee.schedule[isoDate];
+                        }
+                    }
+                }
+            }
+
+            saveDataToLocalStorage();
+            render();
+            alert(`Grafik dla ${selectedEmployeeName} uzupełniony automatycznie, rozpoczynając od zmiany ${startShift} dla siłowni ${selectedGym}.`);
+        }
+        
+        // Renderowanie całego kalendarza/grafiku
+        function render() {
+            const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+            const monthNames = ["Styczeń", "Luty", "Marzec", "Kwiecień", "Maj", "Czerwiec", "Lipiec", "Sierpień", "Wrzesień", "Październik", "Listopad", "Grudzień"];
+
+            let html = '<table>';
+            html += '<thead><tr>';
+            html += '<th class="employee-name-header">Pracownik<div class="shift-label-container"><div class="shift-label morning-label">Rano</div><div class="shift-label afternoon-label">Popoł.</div></div></th>';
+            
+            const dayNames = ["Pon", "Wto", "Śro", "Czw", "Pią", "Sob", "Nie"];
+            for (let i = 1; i <= daysInMonth; i++) {
+                const dayDate = new Date(currentYear, currentMonth, i);
+                const dayOfWeek = (dayDate.getDay() === 0) ? 6 : dayDate.getDay() - 1; // 0 dla Pon, 6 dla Nie
+                const isWeekend = dayOfWeek >= 5; // Sobota lub Niedziela
+                html += `<th class="day-header ${isWeekend ? 'weekend' : ''}">
+                            <div>${dayNames[dayOfWeek]}</div>
+                            <div class="day-number">${i}</div>
+                         </th>`;
+            }
+            html += '</tr></thead><tbody>';
+
+            // Jeśli brak pracowników, wyświetl komunikat
+            if (employees.length === 0) {
+                 html += `<tr><td colspan="${daysInMonth + 1}" style="height: 100px; text-align:center;">Dodaj pracowników, aby rozpocząć tworzenie grafiku.</td></tr>`;
+            } else {
+                employees.forEach(employee => {
+                    html += `<tr>`;
+                    html += `<td class="employee-name-cell">
+                                <div class="shift-label-container">
+                                    <div class="shift-label morning-label">${employee.name}</div>
+                                    <div class="shift-label afternoon-label"></div>
+                                </div>
+                                <span class="remove-employee-btn" data-employee-name="${employee.name}" title="Usuń ${employee.name}">&times;</span>
+                             </td>`;
+                    for (let i = 1; i <= daysInMonth; i++) {
+                        const dayDate = new Date(currentYear, currentMonth, i);
+                        const dayOfWeek = (dayDate.getDay() === 0) ? 6 : dayDate.getDay() - 1; // 0 dla Pon, 6 dla Nie
+                        const isWeekend = dayOfWeek >= 5;
+                        const isoDate = dayDate.toISOString().split('T')[0]; // Format YYYY-MM-DD
+                        
+                        // Pobierz statusy zmian dla danego dnia i pracownika
+                        const morningShiftStatus = employee.schedule[isoDate]?.R;
+                        const afternoonShiftStatus = employee.schedule[isoDate]?.P;
+
+                        // Ustaw klasy CSS dla kolorowania zmian
+                        const morningClass = morningShiftStatus ? `work-${morningShiftStatus.toLowerCase()}` : '';
+                        const afternoonClass = afternoonShiftStatus ? `work-${afternoonShiftStatus.toLowerCase()}` : '';
+
+                        html += `<td class="day-cell ${isWeekend ? 'weekend' : ''}"
+                                     data-employee-name="${employee.name}"
+                                     data-date="${isoDate}">
+                                     <div class="shift morning ${morningClass}" data-shift="R">${morningShiftStatus || ''}</div>
+                                     <div class="shift afternoon ${afternoonClass}" data-shift="P">${afternoonShiftStatus || ''}</div>
+                                 </td>`;
+                    }
+                    html += '</tr>';
+                });
+            }
+            html += '</tbody></table>';
+            calendarContainer.innerHTML = html;
+
+            // Ustaw tekst miesiąca i roku dla widoku drukowania
+            printMonthYearDiv.textContent = `${monthNames[currentMonth]} ${currentYear}`;
+            renderSummary(); // Wyrenderuj podsumowanie po odświeżeniu kalendarza
+        }
+
+        // Renderowanie sekcji podsumowania zmian dla wszystkich pracowników
+        function renderSummary() {
+            let summaryHtml = '<h2>Podsumowanie zmian w miesiącu:</h2>';
+            if (employees.length === 0) {
+                summaryHtml += '<p>Brak pracowników do wyświetlenia podsumowania.</p>';
+                summaryContainer.innerHTML = summaryHtml;
+                return;
+            }
+
+            const currentMonthISO = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}`;
+
+            employees.forEach(employee => {
+                // Inicjalizacja liczników dla każdej siłowni i typu zmiany (Rano/Popołudnie)
+                const shiftCounts = {
+                    G: { R: 0, P: 0 },
+                    S: { R: 0, P: 0 },
+                    K: { R: 0, P: 0 }
+                };
+                
+                // Iteracja przez harmonogram pracownika
+                for (const date in employee.schedule) {
+                    // Sprawdź, czy data należy do aktualnie wybranego miesiąca
+                    if (date.startsWith(currentMonthISO)) {
+                        const shifts = employee.schedule[date];
+                        if (shifts.R) {
+                            const gymType = shifts.R;
+                            if (shiftCounts[gymType]) {
+                                shiftCounts[gymType].R++;
+                            }
+                        }
+                        if (shifts.P) {
+                            const gymType = shifts.P;
+                            if (shiftCounts[gymType]) {
+                                shiftCounts[gymType].P++;
+                            }
+                        }
+                    }
+                }
+
+                // Dodanie podsumowania dla bieżącego pracownika
+                summaryHtml += `
+                    <div class="summary-item">
+                        <strong>${employee.name}:</strong>
+                        <div class="summary-details">
+                            <div class="summary-detail-group">
+                                <div class="summary-detail-box">
+                                    <div class="legend-color-box work-g">G</div>
+                                    <span>Rano: ${shiftCounts.G.R}</span>
+                                </div>
+                                <div class="summary-detail-box">
+                                    <div class="legend-color-box work-g">G</div>
+                                    <span>Popołudnie: ${shiftCounts.G.P}</span>
+                                </div>
+                            </div>
+                            <div class="summary-detail-group">
+                                <div class="summary-detail-box">
+                                    <div class="legend-color-box work-s">S</div>
+                                    <span>Rano: ${shiftCounts.S.R}</span>
+                                </div>
+                                <div class="summary-detail-box">
+                                    <div class="legend-color-box work-s">S</div>
+                                    <span>Popołudnie: ${shiftCounts.S.P}</span>
+                                </div>
+                            </div>
+                            <div class="summary-detail-group">
+                                <div class="summary-detail-box">
+                                    <div class="legend-color-box work-k">K</div>
+                                    <span>Rano: ${shiftCounts.K.R}</span>
+                                </div>
+                                <div class="summary-detail-box">
+                                    <div class="legend-color-box work-k">K</div>
+                                    <span>Popołudnie: ${shiftCounts.K.P}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            summaryContainer.innerHTML = summaryHtml;
+        }
+
+        // Zapisz dane pracowników do Local Storage przeglądarki
+        function saveDataToLocalStorage() {
+            localStorage.setItem('workCalendarData', JSON.stringify(employees));
+        }
+
+        // Wczytaj dane pracowników z Local Storage
+        function loadDataFromLocalStorage() {
+            const data = localStorage.getItem('workCalendarData');
+            if (data) employees = JSON.parse(data);
+        }
+        
+        // Wyczyść wszystkie dane (pracowników i grafik) po potwierdzeniu
+        function clearAllData() {
+            if (confirm('Czy na pewno chcesz usunąć wszystkich pracowników i cały grafik? Tej operacji nie można cofnąć.')) {
+                employees = []; // Wyczyść tablicę pracowników
+                localStorage.removeItem('workCalendarData'); // Usuń dane z Local Storage
+                render(); // Odśwież widok kalendarza
+                populateAutofillEmployeeSelect(); // Odśwież listę autofill
+                renderSummary(); // Odśwież podsumowanie
+            }
+        }
+
+        // Funkcja wywołująca drukowanie strony
+        function printSchedule() {
+            window.print();
+        }
+
+        // Obsługa kliknięcia przycisku "usuń pracownika"
+        function handleRemoveEmployeeClick(event) {
+            const removeBtn = event.target.closest('.remove-employee-btn');
+            if (!removeBtn) return; // Upewnij się, że kliknięto na przycisk usuwania
+
+            const employeeName = removeBtn.dataset.employeeName;
+            if (confirm(`Czy na pewno chcesz usunąć pracownika "${employeeName}" i cały jego grafik? Tej operacji nie można cofnąć.`)) {
+                removeEmployee(employeeName);
+            }
+        }
+
+        // Usunięcie pracownika z listy
+        function removeEmployee(nameToRemove) {
+            employees = employees.filter(employee => employee.name !== nameToRemove);
+            saveDataToLocalStorage();
+            render();
+            populateAutofillEmployeeSelect();
+            renderSummary();
+            alert(`Pracownik "${nameToRemove}" został usunięty.`);
+        }
+
+        // Rozpoczęcie działania aplikacji
+        init();
+    });
+    </script>
+
+</body>
+</html>

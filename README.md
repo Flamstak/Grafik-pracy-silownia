@@ -8,7 +8,8 @@ Prosta i intuicyjna aplikacja webowa do zarządzania grafikami pracy dla wielu p
 - [Technologie](#technologie)
 - [Jak uruchomić projekt lokalnie?](#jak-uruchomić-projekt-lokalnie)
 - [Użycie](#użycie)
-- [Podgląd](#podgląd)
+- [Podgląd / Live Demo](#podgląd--live-demo)
+- [Ważna Uwaga Projektowa](#ważna-uwaga-projektowa)
 - [Licencja](#licencja)
 
 ## Cechy
@@ -55,6 +56,9 @@ Aplikacja powinna od razu się załadować i być gotowa do użycia. 👍
 6.  **Wyczyść Dane:** Przycisk "Wyczyść dane" usuwa wszystkich pracowników i cały grafik. Używaj ostrożnie! ⚠️
 7.  **Drukuj Grafik:** Kliknij "Drukuj Grafik", aby przygotować widok do druku. 🖨️
 
-## Podgląd
+## Podgląd / Live Demo
 
-*(**Pamiętaj, aby tutaj dodać zrzuty ekranu z Twojej aplikacji!** To kluczowy element dobrego README.)*
+Aplikację możesz zobaczyć w akcji pod adresem:
+👉 [https://flamstak.github.io/Grafik-pracy-silownia/](https://flamstak.github.io/Grafik-pracy-silownia/)
+
+*(**Pamiętaj, aby tutaj dodać zrzuty ekranu z Twojej aplikacji!** To kluczowy element dobrego README, uzupełniający live demo.)*
