@@ -38,7 +38,7 @@ Ten projekt to pojedynczy plik HTML, który zawiera w sobie style CSS i skrypty 
 
 1.  **Sklonuj repozytorium:**
     ```bash
-    git clone [https://github.com/Flamstak/Grafik-pracy-silownia.git](https://github.com/Flamstak/Grafik-pracy-silownia.git)
+    git clone https://github.com/Flamstak/Grafik-pracy-silownia.git
     ```
 
 2.  **Otwórz plik `index.html`:**
